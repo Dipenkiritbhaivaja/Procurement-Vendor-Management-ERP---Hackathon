@@ -25,13 +25,16 @@ class ResPartner(models.Model):
             partner.total_procurement_amount = sum(completed_pos.mapped('amount_total'))
 
             # 2. On-Time Delivery Percentage & Delivery Score
-            # Check all pickings (receipts) related to the partner's purchase orders
-            all_pickings = completed_pos.mapped('picking_ids').filtered(lambda p: p.picking_type_code == 'incoming' and p.state == 'done')
-            if all_pickings:
-                on_time_pickings = all_pickings.filtered(lambda p: p.date_done and p.scheduled_date and p.date_done <= p.scheduled_date)
-                on_time_pct = (len(on_time_pickings) / len(all_pickings)) * 100.0
+            # Check all pickings (receipts) related to the partner's purchase orders if stock module is installed
+            if 'picking_ids' in self.env['purchase.order']._fields:
+                all_pickings = completed_pos.mapped('picking_ids').filtered(lambda p: p.picking_type_code == 'incoming' and p.state == 'done')
+                if all_pickings:
+                    on_time_pickings = all_pickings.filtered(lambda p: p.date_done and p.scheduled_date and p.date_done <= p.scheduled_date)
+                    on_time_pct = (len(on_time_pickings) / len(all_pickings)) * 100.0
+                else:
+                    on_time_pct = 100.0 # Default if no delivery history
             else:
-                on_time_pct = 100.0 # Default if no delivery history
+                on_time_pct = 100.0 # Fallback if stock module not installed
 
             partner.on_time_percentage = on_time_pct
             partner.delivery_score = on_time_pct

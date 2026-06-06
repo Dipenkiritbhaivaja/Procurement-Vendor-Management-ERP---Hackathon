@@ -87,7 +87,7 @@ class VendorBridgePortal(CustomerPortal):
         ], limit=1)
 
         # Get attachments associated with the PO
-        attachments = request.env['ir.attachment'].search([
+        attachments = request.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'purchase.order'),
             ('res_id', '=', order.id)
         ])
