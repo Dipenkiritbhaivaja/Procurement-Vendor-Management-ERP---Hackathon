@@ -1,20 +1,39 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "procurement_vendor_management",
-    'summary': "Procurement and Vendor Management System",
+    'name': "VendorBridge Procurement & Vendor Management ERP",
+    'summary': "Procurement and Vendor Management System for Hackathon",
     'description': """
         Manage vendor profiles, track performance, raise procurement requests,
         and handle purchase orders seamlessly in Odoo 18.
     """,
-    'author': "Creyox Technologies",
+    'author': "Gemini Antigravity Team",
     'website': "https://www.creyox.com",
     'category': 'Inventory/Purchase',
-    'version': '18.0.0.0',
-    'depends': ['base'],
+    'version': '18.0.0.1',
+    'depends': [
+        'purchase',
+        'account',
+        'contacts',
+        'mail',
+        'portal',
+        'web'
+    ],
     'data': [
+        'security/security.xml',
         'security/ir.model.access.csv',
+        'data/sequences.xml',
+        'data/mail_templates.xml',
+        'views/res_partner_views.xml',
+        'views/vendor_quotation_views.xml',
+        'views/approval_remark_wizard_views.xml',
+        'views/purchase_order_views.xml',
+        'views/approval_views.xml',
+        'views/dashboard_views.xml',
+        'views/portal_templates.xml',
+        'reports/quotation_report.xml',
     ],
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
 }
+
