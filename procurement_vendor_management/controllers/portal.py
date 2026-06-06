@@ -41,12 +41,15 @@ class VendorBridgePortal(CustomerPortal):
     def portal_my_rfqs(self, page=1, date_begin=None, date_end=None, sortby=None, **kw):
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
-        RFQ = request.env['purchase.order']
 
+        # Use sudo() to bypass ORM record rules which can be unreliable with Many2many domains
+        # Then filter explicitly to only RFQs this partner is the vendor of OR is invited to
         domain = [
             ('hackathon_state', 'in', ['pending_vendor_bid', 'under_review', 'pending_approval', 'approved', 'rejected', 'po_created']),
-            '|', ('partner_id', '=', partner.id), ('invited_vendor_ids', 'in', partner.id)
+            '|', ('partner_id', '=', partner.id), ('invited_vendor_ids', 'in', [partner.id])
         ]
+
+        RFQ = request.env['purchase.order'].sudo()
 
         # Count for pager
         count = RFQ.search_count(domain)
@@ -73,8 +76,9 @@ class VendorBridgePortal(CustomerPortal):
     def portal_rfq_detail(self, order_id=None, **kw):
         partner = request.env.user.partner_id
         try:
-            order = request.env['purchase.order'].browse(order_id)
-            # Check access
+            # Use sudo() to load the record, then manually verify access
+            order = request.env['purchase.order'].sudo().browse(order_id)
+            # Check access: must be primary vendor OR in invited vendors list
             if not order.exists() or (order.partner_id.id != partner.id and partner.id not in order.invited_vendor_ids.ids):
                 raise AccessError(_("You do not have access to this RFQ."))
         except (AccessError, MissingError):
@@ -103,15 +107,15 @@ class VendorBridgePortal(CustomerPortal):
     @http.route(['/my/hackathon/rfqs/<int:order_id>/submit_quotation'], type='http', auth="user", methods=['POST'], website=True)
     def portal_submit_quotation(self, order_id=None, **post):
         partner = request.env.user.partner_id
-        RFQ = request.env['purchase.order']
         try:
-            order = RFQ.browse(order_id)
+            # Use sudo() to load the record, then manually verify access
+            order = request.env['purchase.order'].sudo().browse(order_id)
             if not order.exists() or (order.partner_id.id != partner.id and partner.id not in order.invited_vendor_ids.ids):
                 raise AccessError(_("You do not have access to this RFQ."))
         except (AccessError, MissingError):
             return request.redirect('/my/hackathon/rfqs')
 
-        if order.hackathon_state not in ('draft', 'pending_vendor_bid'):
+        if order.hackathon_state not in ('draft', 'pending_vendor_bid', 'under_review'):
             return request.redirect(f'/my/hackathon/rfqs/{order.id}?error=state')
 
         # Prevent double submission

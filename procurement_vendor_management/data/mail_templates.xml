@@ -8,6 +8,7 @@
             <field name="subject">Invitation to Bid: Request for Quotation {{ object.name }}</field>
             <field name="email_from">{{ (object.user_id.email_formatted or object.company_id.email_formatted or '') }}</field>
             <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="partner_to">{{ ctx.get('partner_id', '') }}</field>
             <field name="body_html" type="html">
                 <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
                     <p>Dear Partner,</p>

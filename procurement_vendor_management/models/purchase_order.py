@@ -149,8 +149,28 @@ class PurchaseOrder(models.Model):
             all_vendors = self.partner_id | self.invited_vendor_ids
             for vendor in all_vendors:
                 if vendor.email:
-                    # Context email_to and partner_id to allow customizing templates per vendor
-                    template.with_context(email_to=vendor.email, partner_id=vendor.id).send_mail(self.id, force_send=True, email_values={'email_to': vendor.email})
+                    # Generate the email values from template manually to bypass Odoo standard partner/recipients fallback logic
+                    rendered = template.with_context(
+                        email_to=vendor.email,
+                        partner_id=vendor.id
+                    )._generate_template([self.id], ['subject', 'body_html', 'email_from'])
+                    values = rendered.get(self.id, {})
+                    
+                    # Force recipients
+                    values.update({
+                        'email_to': vendor.email,
+                        'partner_ids': [(6, 0, [vendor.id])],
+                        'recipient_ids': [(6, 0, [vendor.id])],
+                        'res_id': self.id,
+                        'model': 'purchase.order',
+                        'body': values.get('body_html', ''),
+                    })
+                    if 'partner_to' in values:
+                        values.pop('partner_to')
+                    
+                    # Create and send the mail directly
+                    mail = self.env['mail.mail'].sudo().create(values)
+                    mail.send()
 
     def _notify_managers_approval_request(self):
         template = self.env.ref('procurement_vendor_management.email_template_approval_request', raise_if_not_found=False)
