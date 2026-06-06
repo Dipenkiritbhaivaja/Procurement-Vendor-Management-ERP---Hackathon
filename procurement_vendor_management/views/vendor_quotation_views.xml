@@ -35,7 +35,7 @@
                 <field name="total_amount" widget="monetary"/>
                 <field name="currency_id" column_invisible="True"/>
                 <field name="delivery_days"/>
-                <field name="vendor_rating" widget="priority"/>
+                <field name="vendor_rating"/>
                 <field name="on_time_percentage"/>
                 <field name="submission_date"/>
                 <field name="is_lowest_price" widget="boolean_toggle" readonly="1"/>

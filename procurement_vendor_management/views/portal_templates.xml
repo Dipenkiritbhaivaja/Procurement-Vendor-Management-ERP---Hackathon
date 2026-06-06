@@ -135,7 +135,7 @@
                                         <tbody>
                                             <tr t-foreach="order.order_line" t-as="line">
                                                 <td>
-                                                    <span t-field="line.product_id.display_name"/>
+                                                    <span t-field="line.name"/>
                                                 </td>
                                                 <td class="text-center fw-bold">
                                                     <span t-field="line.product_qty"/> <span t-field="line.product_uom.name"/>
@@ -186,7 +186,7 @@
                                             </thead>
                                             <tbody>
                                                 <tr t-foreach="order.order_line" t-as="line">
-                                                    <td><span t-field="line.product_id.display_name"/></td>
+                                                    <td><span t-field="line.name"/></td>
                                                     <td><span t-field="line.product_qty"/> <span t-field="line.product_uom.name"/></td>
                                                     <td>
                                                         <div class="input-group">
@@ -230,7 +230,7 @@
                                     </thead>
                                     <tbody>
                                         <tr t-foreach="existing_quotation.line_ids" t-as="q_line">
-                                            <td><span t-field="q_line.product_id.display_name"/></td>
+                                            <td><span t-field="q_line.product_name"/></td>
                                             <td class="text-center"><span t-field="q_line.quantity"/></td>
                                             <td class="text-end"><span t-field="q_line.price_unit" t-options='{"widget": "monetary", "display_currency": existing_quotation.currency_id}'/></td>
                                             <td class="text-end fw-bold"><span t-field="q_line.subtotal" t-options='{"widget": "monetary", "display_currency": existing_quotation.currency_id}'/></td>

@@ -60,26 +60,26 @@ class VendorQuotation(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('vendor.quotation') or 'New'
+                vals['name'] = self.env['ir.sequence'].sudo().next_by_code('vendor.quotation') or 'New'
         return super().create(vals_list)
 
     def action_submit(self):
         for record in self:
             if record.state == 'draft':
                 record.state = 'submitted'
-                # Log in history
-                self.env['approval.history'].create({
+                # Log in history with sudo
+                self.env['approval.history'].sudo().create({
                     'purchase_id': record.purchase_id.id,
                     'user_id': self.env.user.id,
                     'action': 'Vendor Submitted Quote',
                     'remark': _("Vendor %s submitted quotation %s for %s %s") % (record.vendor_id.name, record.name, record.total_amount, record.currency_id.symbol),
                     'date': fields.Datetime.now(),
                 })
-                # RFQ state automatically moves to under_review if currently pending_vendor_bid
+                # RFQ state automatically moves to under_review if currently pending_vendor_bid (using sudo for state write)
                 if record.purchase_id.hackathon_state in ('draft', 'pending_vendor_bid'):
-                    record.purchase_id.hackathon_state = 'under_review'
-                # Send mail notification
-                record._notify_quotation_submitted()
+                    record.purchase_id.sudo().hackathon_state = 'under_review'
+                # Send mail notification and post chatter with sudo
+                record.sudo()._notify_quotation_submitted()
 
     def action_accept(self):
         for record in self:

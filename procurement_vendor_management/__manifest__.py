@@ -12,6 +12,7 @@
     'version': '18.0.0.1',
     'depends': [
         'purchase',
+        'purchase_stock',
         'account',
         'contacts',
         'mail',

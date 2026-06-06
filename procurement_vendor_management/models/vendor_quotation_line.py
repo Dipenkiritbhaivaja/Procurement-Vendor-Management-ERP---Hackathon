@@ -13,6 +13,13 @@ class VendorQuotationLine(models.Model):
     price_unit = fields.Monetary(string="Unit Price", required=True, currency_field='currency_id')
     subtotal = fields.Monetary(string="Subtotal", compute="_compute_subtotal", currency_field='currency_id', store=True)
 
+    product_name = fields.Char(string="Product Name", compute="_compute_product_name", store=True)
+
+    @api.depends('product_id')
+    def _compute_product_name(self):
+        for line in self:
+            line.product_name = line.product_id.display_name or line.product_id.name
+
     @api.depends('quantity', 'price_unit')
     def _compute_subtotal(self):
         for line in self:
