@@ -16,7 +16,7 @@
         <field name="arch" type="xml">
             <!-- Add workflow buttons to Header -->
             <xpath expr="//header" position="inside">
-                <button name="action_send_rfq_custom" type="object" string="Send RFQ (Hackathon)" 
+                <button name="action_send_rfq_custom" type="object" string="Send RFQ to Vendors" 
                         class="oe_highlight" invisible="hackathon_state != 'draft'"
                         groups="procurement_vendor_management.group_procurement_officer"/>
                 
@@ -32,7 +32,7 @@
                         class="btn-secondary" invisible="hackathon_state != 'pending_approval'"
                         groups="procurement_vendor_management.group_procurement_manager"/>
                 
-                <button name="action_create_po_custom" type="object" string="Create PO (Hackathon)" 
+                <button name="action_create_po_custom" type="object" string="Create PO" 
                         class="oe_highlight" invisible="hackathon_state != 'approved'"
                         groups="procurement_vendor_management.group_procurement_officer"/>
             </xpath>

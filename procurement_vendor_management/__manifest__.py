@@ -6,8 +6,7 @@
         Manage vendor profiles, track performance, raise procurement requests,
         and handle purchase orders seamlessly in Odoo 18.
     """,
-    'author': "Gemini Antigravity Team",
-    'website': "https://www.creyox.com",
+    'author': "Heet,Dipen,Sujal",
     'category': 'Inventory/Purchase',
     'version': '18.0.0.1',
     'depends': [
@@ -35,6 +34,5 @@
     ],
     'installable': True,
     'application': True,
-    'license': 'LGPL-3',
 }
 

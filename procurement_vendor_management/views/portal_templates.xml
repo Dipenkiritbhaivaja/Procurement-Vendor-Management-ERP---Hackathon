@@ -21,21 +21,69 @@
         </xpath>
     </template>
 
-    <!-- 2. Extend Portal Breadcrumbs -->
-    <template id="portal_breadcrumbs_procurement" inherit_id="portal.portal_breadcrumbs" name="Portal Breadcrumbs: Bidding &amp; Procurement">
-        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
-            <li t-if="page_name == 'rfq'" class="breadcrumb-item active">
-                <a href="/my/hackathon/rfqs">My RFQs</a>
-                <t t-if="order"> / <span t-out="order.name"/></t>
+     <!-- 2. Override Standard Purchase Portal Breadcrumbs -->
+    <template id="portal_my_home_menu_purchase_procurement" inherit_id="purchase.portal_my_home_menu_purchase" name="Portal layout: purchase menu entries override">
+        <!-- Define variables at the start of the breadcrumbs list -->
+        <xpath expr="//li[1]" position="before">
+            <t t-set="is_hackathon" t-value="bool('/my/hackathon/' in request.httprequest.path or (order and order.hackathon_state != 'draft'))"/>
+            <t t-set="from_submitted" t-value="request.params.get('from_submitted')"/>
+        </xpath>
+
+        <!-- Redirect Requests for Quotation & Bids to My Bidding Requests (RFQs) / My Submitted Bids -->
+        <xpath expr="//li[@t-if=&quot;page_name == 'rfq' or order and order.state == 'sent'&quot;]" position="replace">
+            <!-- RFQ Breadcrumb -->
+            <li t-if="page_name == 'rfq' or (order and (order.hackathon_state != 'po_created' if order.hackathon_state else order.state == 'sent'))" t-attf-class="breadcrumb-item #{'active' if not order else ''}">
+                <t t-if="is_hackathon">
+                    <t t-if="from_submitted">
+                        <a t-if="order" href="/my/hackathon/quotations">My Submitted Bids</a>
+                        <t t-else="">My Submitted Bids</t>
+                    </t>
+                    <t t-else="">
+                        <a t-if="order" href="/my/hackathon/rfqs">My Bidding Requests (RFQs)</a>
+                        <t t-else="">My Bidding Requests (RFQs)</t>
+                    </t>
+                </t>
+                <t t-else="">
+                    <a t-if="order" t-attf-href="/my/rfq?{{ keep_query() }}">Requests for Quotation</a>
+                    <t t-else="">Requests for Quotation</t>
+                </t>
             </li>
+
+            <!-- Quotation Breadcrumb (Bids submitted) -->
             <li t-if="page_name == 'quotation'" class="breadcrumb-item active">
-                <a href="/my/hackathon/quotations">My Quotations</a>
+                My Submitted Bids
             </li>
-            <li t-if="page_name == 'purchase_order'" class="breadcrumb-item active">
-                <a href="/my/hackathon/purchase_orders">My Purchase Orders</a>
+        </xpath>
+
+
+
+        <!-- Redirect Purchase Orders to our custom Purchase Orders list, using My Purchase Orders as the category name -->
+        <xpath expr="//li[@t-if=&quot;page_name == 'purchase' or order and order.state != 'sent'&quot;]" position="replace">
+            <li t-if="page_name == 'purchase_order' or page_name == 'purchase' or (order and (order.hackathon_state == 'po_created' if order.hackathon_state else order.state != 'sent'))" t-attf-class="breadcrumb-item #{'active' if not order else ''}">
+                <t t-if="is_hackathon">
+                    <a t-if="order" href="/my/hackathon/purchase_orders">My Purchase Orders</a>
+                    <t t-else="">My Purchase Orders</t>
+                </t>
+                <t t-else="">
+                    <a t-if="order" t-attf-href="/my/purchase?{{ keep_query() }}">Purchase Orders</a>
+                    <t t-else="">Purchase Orders</t>
+                </t>
+            </li>
+        </xpath>
+
+        <!-- Override details sequence number / bid reference in breadcrumbs -->
+        <xpath expr="//li[@t-if=&quot;order&quot;]" position="replace">
+            <li t-if="order" class="breadcrumb-item active">
+                <t t-if="is_hackathon and from_submitted and existing_quotation">
+                    <t t-esc="existing_quotation.name"/>
+                </t>
+                <t t-else="">
+                    <t t-esc="order.name"/>
+                </t>
             </li>
         </xpath>
     </template>
+
 
     <!-- 3. Template: My RFQs List -->
     <template id="portal_my_rfqs" name="My RFQs">
@@ -312,13 +360,13 @@
                     <tbody>
                         <tr t-foreach="quotations" t-as="quote">
                             <td class="ps-3">
-                                <a t-att-href="'/my/hackathon/rfqs/%s' % quote.purchase_id.id" class="fw-bold text-decoration-none" style="color: #714B67;">
+                                <a t-att-href="'/my/hackathon/rfqs/%s' % quote.sudo().purchase_id.id" class="fw-bold text-decoration-none" style="color: #714B67;">
                                     <span t-field="quote.name"/>
                                 </a>
                             </td>
                             <td>
-                                <a t-att-href="'/my/hackathon/rfqs/%s' % quote.purchase_id.id" class="text-decoration-none text-muted">
-                                    <span t-field="quote.purchase_id.name"/>
+                                <a t-att-href="'/my/hackathon/rfqs/%s' % quote.sudo().purchase_id.id" class="text-decoration-none text-muted">
+                                    <span t-field="quote.sudo().purchase_id.name"/>
                                 </a>
                             </td>
                             <td>
