@@ -26,7 +26,6 @@ class PurchaseOrder(models.Model):
         'order_id',
         'partner_id',
         string="Invited Vendors",
-        domain="[('supplier_rank', '>', 0)]",
         help="Vendors invited to submit quotations for this RFQ."
     )
 
@@ -48,19 +47,10 @@ class PurchaseOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('partner_id') and not vals.get('invited_vendor_ids'):
-                vals['invited_vendor_ids'] = [(4, vals['partner_id'])]
         orders = super().create(vals_list)
         for order in orders:
             order._create_history_record('RFQ Created', _("RFQ created by %s.") % self.env.user.name)
         return orders
-
-    def write(self, vals):
-        if 'partner_id' in vals and vals['partner_id']:
-            if 'invited_vendor_ids' not in vals:
-                vals['invited_vendor_ids'] = [(4, vals['partner_id'])]
-        return super().write(vals)
 
     def _create_history_record(self, action, remark):
         self.env['approval.history'].create({
@@ -77,7 +67,8 @@ class PurchaseOrder(models.Model):
             raise UserError(_("You can only send an RFQ that is in draft state."))
         
         self.hackathon_state = 'pending_vendor_bid'
-        self._create_history_record('RFQ Sent', _("RFQ sent to invited vendors: %s.") % ", ".join(self.invited_vendor_ids.mapped('name')))
+        all_vendors = self.partner_id | self.invited_vendor_ids
+        self._create_history_record('RFQ Sent', _("RFQ sent to invited vendors: %s.") % ", ".join(all_vendors.mapped('name')))
         
         # Send mail notifications
         self._notify_invited_vendors()
@@ -155,10 +146,11 @@ class PurchaseOrder(models.Model):
     def _notify_invited_vendors(self):
         template = self.env.ref('procurement_vendor_management.email_template_rfq_invitation', raise_if_not_found=False)
         if template:
-            for vendor in self.invited_vendor_ids:
+            all_vendors = self.partner_id | self.invited_vendor_ids
+            for vendor in all_vendors:
                 if vendor.email:
-                    # Context partner_id to allow customizing templates per vendor
-                    template.with_context(partner_id=vendor.id).send_mail(self.id, force_send=True, email_values={'email_to': vendor.email})
+                    # Context email_to and partner_id to allow customizing templates per vendor
+                    template.with_context(email_to=vendor.email, partner_id=vendor.id).send_mail(self.id, force_send=True, email_values={'email_to': vendor.email})
 
     def _notify_managers_approval_request(self):
         template = self.env.ref('procurement_vendor_management.email_template_approval_request', raise_if_not_found=False)
@@ -167,26 +159,26 @@ class PurchaseOrder(models.Model):
             recipients = group_managers.users.mapped('partner_id')
             for recipient in recipients:
                 if recipient.email:
-                    template.send_mail(self.id, force_send=True, email_values={'email_to': recipient.email})
+                    template.with_context(email_to=recipient.email).send_mail(self.id, force_send=True, email_values={'email_to': recipient.email})
 
     def _notify_po_created(self):
         template = self.env.ref('procurement_vendor_management.email_template_po_created', raise_if_not_found=False)
         if template:
             if self.partner_id.email:
-                template.send_mail(self.id, force_send=True, email_values={'email_to': self.partner_id.email})
+                template.with_context(email_to=self.partner_id.email).send_mail(self.id, force_send=True, email_values={'email_to': self.partner_id.email})
 
     def _notify_approval_approved(self):
         template = self.env.ref('procurement_vendor_management.email_template_approval_approved', raise_if_not_found=False)
         if template:
             # Send notification back to the procurement officer who raised the request (user_id)
             if self.user_id.partner_id.email:
-                template.send_mail(self.id, force_send=True, email_values={'email_to': self.user_id.partner_id.email})
+                template.with_context(email_to=self.user_id.partner_id.email).send_mail(self.id, force_send=True, email_values={'email_to': self.user_id.partner_id.email})
 
     def _notify_approval_rejected(self):
         template = self.env.ref('procurement_vendor_management.email_template_approval_rejected', raise_if_not_found=False)
         if template:
             if self.user_id.partner_id.email:
-                template.send_mail(self.id, force_send=True, email_values={'email_to': self.user_id.partner_id.email})
+                template.with_context(email_to=self.user_id.partner_id.email).send_mail(self.id, force_send=True, email_values={'email_to': self.user_id.partner_id.email})
 
     def action_approve_wizard(self):
         self.ensure_one()
