@@ -40,7 +40,7 @@
     <record id="action_procurement_dashboard" model="ir.actions.act_window">
         <field name="name">Procurement Analytics Dashboard</field>
         <field name="res_model">purchase.order</field>
-        <field name="view_mode">graph,pivot,tree</field>
+        <field name="view_mode">graph,pivot,list</field>
         <field name="view_id" ref="purchase_order_view_graph_status"/>
         <field name="context">{'search_default_groupby_hackathon_state': 1}</field>
         <field name="help" type="html">
